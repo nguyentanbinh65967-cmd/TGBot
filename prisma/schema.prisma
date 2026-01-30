@@ -1,0 +1,120 @@
+// Prisma Schema для Telegram WebApp проекта
+// PostgreSQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+/// Роли пользователей в системе
+/// - guest: неавторизованный пользователь (не хранится в БД)
+/// - user: обычный пользователь
+/// - admin: администратор
+/// - superadmin: суперадминистратор
+enum Role {
+  user
+  admin
+  superadmin
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// Пользователи Telegram WebApp
+/// 
+/// Основная таблица для хранения данных пользователей из Telegram.
+/// Telegram ID используется как первичный ключ (bigint).
+model User {
+  /// Telegram User ID (используется как PK)
+  id          BigInt   @id @db.BigInt
+  
+  /// Telegram username (может быть null)
+  username    String?  @db.VarChar(255)
+  
+  /// Имя пользователя из Telegram
+  firstName   String   @map("first_name") @db.VarChar(255)
+  
+  /// Фамилия пользователя из Telegram (может быть null)
+  lastName    String?  @map("last_name") @db.VarChar(255)
+  
+  /// URL фото профиля из Telegram (может быть null)
+  photoUrl    String?  @map("photo_url") @db.VarChar(500)
+  
+  /// Роль пользователя в системе
+  role        Role     @default(user)
+  
+  /// Заблокирован ли пользователь
+  isBlocked   Boolean  @default(false) @map("is_blocked")
+  
+  /// Дата создания записи
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  /// Дата последнего обновления
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  /// Дата последнего входа
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamp(6)
+  
+  // Relations
+  logs        Log[]
+  
+  @@map("users")
+  @@index([role], name: "idx_users_role")
+  @@index([isBlocked], name: "idx_users_is_blocked")
+  @@index([lastLoginAt], name: "idx_users_last_login_at")
+}
+
+/// Логи действий пользователей и администраторов (Audit Trail)
+/// 
+/// Таблица для логирования всех действий в системе.
+/// Используется для аудита и отладки.
+model Log {
+  /// ID лога (автоинкремент)
+  id        Int      @id @default(autoincrement())
+  
+  /// ID пользователя, выполнившего действие (nullable для системных действий)
+  userId    BigInt?  @map("user_id") @db.BigInt
+  
+  /// Роль пользователя на момент действия
+  role      Role
+  
+  /// Тип действия (например: "user.created", "admin.access")
+  action    String   @db.VarChar(100)
+  
+  /// Тип сущности, над которой выполнено действие (например: "user", "settings")
+  entity    String?  @db.VarChar(100)
+  
+  /// ID сущности, над которой выполнено действие
+  entityId  String?  @map("entity_id") @db.VarChar(255)
+  
+  /// IP адрес пользователя
+  ip        String   @db.VarChar(45) // IPv6 может быть до 45 символов
+  
+  /// User Agent браузера
+  userAgent String   @map("user_agent") @db.Text
+  
+  /// Дополнительные метаданные в формате JSON
+  meta      Json?
+  
+  /// Дата создания лога
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("logs")
+  @@index([userId], name: "idx_logs_user_id")
+  @@index([action], name: "idx_logs_action")
+  @@index([entity, entityId], name: "idx_logs_entity")
+  @@index([createdAt(sort: Desc)], name: "idx_logs_created_at")
+  @@index([role], name: "idx_logs_role")
+}

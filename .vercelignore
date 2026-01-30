@@ -1,0 +1,52 @@
+# Vercel ignore file
+# Файлы, которые не нужно загружать на Vercel
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation (опционально, если не нужна в production)
+docs/
+*.md
+!README.md
+
+# Scripts (опционально)
+scripts/
+
+# Test files
+**/__tests__/**
+**/*.test.*
+**/*.spec.*
