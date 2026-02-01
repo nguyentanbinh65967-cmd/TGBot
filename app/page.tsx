@@ -3,7 +3,7 @@
 import { useTelegram } from "@/hooks/useTelegram";
 
 export default function Home() {
-  const { user, isReady, isTelegram } = useTelegram();
+  const { user, isReady, isTelegram, webApp } = useTelegram();
 
   return (
     <main className="min-h-screen bg-white">
@@ -22,7 +22,19 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <button className="px-4 py-2 md:px-6 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base">
+              <button
+                onClick={() => {
+                  if (isTelegram && webApp) {
+                    // Если открыто в Telegram, но пользователь не авторизован
+                    // Показываем сообщение
+                    webApp.showAlert("Авторизация происходит автоматически через Telegram. Если вы не видите свои данные, пожалуйста, перезагрузите страницу.");
+                  } else {
+                    // Если открыто не в Telegram
+                    alert("Пожалуйста, откройте это приложение через Telegram бота для авторизации.");
+                  }
+                }}
+                className="px-4 py-2 md:px-6 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base cursor-pointer"
+              >
                 Войти
               </button>
             )}
