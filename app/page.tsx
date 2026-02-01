@@ -23,17 +23,30 @@ export default function Home() {
               </div>
             ) : (
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("Кнопка Войти нажата", { isTelegram, webApp: !!webApp, user: !!user });
+                  
                   if (isTelegram && webApp) {
                     // Если открыто в Telegram, но пользователь не авторизован
-                    // Показываем сообщение
-                    webApp.showAlert("Авторизация происходит автоматически через Telegram. Если вы не видите свои данные, пожалуйста, перезагрузите страницу.");
+                    try {
+                      webApp.showAlert("Авторизация происходит автоматически через Telegram. Если вы не видите свои данные, пожалуйста, перезагрузите страницу.");
+                    } catch (error) {
+                      console.error("Ошибка при вызове showAlert:", error);
+                      alert("Авторизация происходит автоматически через Telegram. Если вы не видите свои данные, пожалуйста, перезагрузите страницу.");
+                    }
                   } else {
                     // Если открыто не в Telegram
                     alert("Пожалуйста, откройте это приложение через Telegram бота для авторизации.");
                   }
                 }}
-                className="px-4 py-2 md:px-6 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base cursor-pointer"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
+                className="px-4 py-2 md:px-6 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm md:text-base cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                style={{ pointerEvents: 'auto' }}
               >
                 Войти
               </button>
