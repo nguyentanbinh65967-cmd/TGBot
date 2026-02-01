@@ -2,20 +2,11 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
 
-export default function UnauthorizedPage() {
+function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
@@ -84,5 +75,17 @@ export default function UnauthorizedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <UnauthorizedContent />
+    </Suspense>
   );
 }

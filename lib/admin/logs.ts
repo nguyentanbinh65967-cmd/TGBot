@@ -84,7 +84,7 @@ export async function getLogs(
   }
 
   if (userId) {
-    where.userId = BigInt(userId);
+    where.userId = userId;
   }
 
   if (dateFrom || dateTo) {
@@ -124,10 +124,11 @@ export async function getLogs(
     },
   });
 
-  // Преобразуем BigInt в string для сериализации
+  // Преобразуем meta из String (JSON) в объект, если нужно
   const serializedLogs = logs.map((log) => ({
     ...log,
-    userId: log.userId ? log.userId.toString() : null,
+    userId: log.userId ? String(log.userId) : null,
+    meta: typeof log.meta === "string" ? JSON.parse(log.meta) : log.meta,
   }));
 
   return {

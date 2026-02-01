@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { validateInitData } from "@/lib/auth";
+import { validateInitData } from "@/lib/auth/server";
 import { getUserRole, hasAdminAccess } from "@/config/rbac";
 import type { Role } from "@/types/user";
 

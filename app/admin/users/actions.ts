@@ -48,7 +48,7 @@ export async function toggleUserBlock(userId: string) {
 
   // Получаем текущее состояние пользователя
   const user = await db.user.findUnique({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
     select: { isBlocked: true, firstName: true, username: true },
   });
 
@@ -58,7 +58,7 @@ export async function toggleUserBlock(userId: string) {
 
   // Обновляем статус блокировки
   const updated = await db.user.update({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
     data: {
       isBlocked: !user.isBlocked,
     },
@@ -103,7 +103,7 @@ export async function changeUserRole(userId: string, newRole: Role) {
 
   // Получаем текущего пользователя
   const targetUser = await db.user.findUnique({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
     select: { role: true, firstName: true, username: true },
   });
 
@@ -116,11 +116,11 @@ export async function changeUserRole(userId: string, newRole: Role) {
     throw new Error("Cannot change your own role");
   }
 
-  // Обновляем роль
+  // Обновляем роль (приводим к типу Prisma Role, исключая "guest")
   const updated = await db.user.update({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
     data: {
-      role: newRole,
+      role: newRole as "user" | "admin" | "superadmin",
     },
   });
 

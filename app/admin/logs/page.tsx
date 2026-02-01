@@ -5,6 +5,7 @@ import { Badge } from "@/components/admin/Badge";
 import { LogsFilters } from "@/lib/admin/logs";
 import { LogsFiltersClient } from "./LogsFiltersClient";
 import { LogMeta } from "./LogMeta";
+import Link from "next/link";
 import type { Role } from "@/types/user";
 
 interface PageProps {

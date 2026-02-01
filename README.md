@@ -212,7 +212,12 @@ NODE_ENV=production
 
 **Build Command:**
 ```
-prisma generate && prisma migrate deploy && next build
+npm run vercel-build
+```
+
+Или напрямую:
+```
+npx prisma generate && npx prisma migrate deploy && next build
 ```
 
 ### Шаг 5: Деплой
@@ -367,7 +372,7 @@ npx drizzle-kit migrate
 - [ ] `BOT_TOKEN` получен от BotFather
 - [ ] Ваш Telegram ID добавлен в `ADMIN_IDS`
 - [ ] Миграции применены (`prisma migrate deploy` или `drizzle-kit migrate`)
-- [ ] Prisma Client сгенерирован (`prisma generate`)
+- [ ] Prisma Client сгенерирован (`npx prisma generate`)
 - [ ] Зависимости установлены (`npm install`)
 
 ---

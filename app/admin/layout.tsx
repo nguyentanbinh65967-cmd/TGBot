@@ -1,7 +1,7 @@
 "use client";
 
 import { useTelegram } from "@/hooks/useTelegram";
-import { checkAuth } from "@/lib/auth";
+import { checkAuth } from "@/lib/auth/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";

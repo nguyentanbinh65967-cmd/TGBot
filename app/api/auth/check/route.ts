@@ -1,4 +1,4 @@
-import { validateInitData } from "@/lib/auth";
+import { validateInitData } from "@/lib/auth/server";
 import { NextResponse } from "next/server";
 
 /**

@@ -1,12 +1,24 @@
 // Prisma Schema для Telegram WebApp проекта
-// PostgreSQL Database
+// Поддержка PostgreSQL и SQLite (fallback)
+//
+// Автоматическое определение провайдера:
+// - Если DATABASE_URL начинается с "postgresql://" или "postgres://" → PostgreSQL
+// - Если DATABASE_URL начинается с "file:" или не установлен → SQLite (file:./dev.db)
+//
+// Для SQLite (fallback):
+//   DATABASE_URL="file:./dev.db"
+//
+// Для PostgreSQL:
+//   DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
 
 generator client {
   provider = "prisma-client-js"
 }
 
+// SQLite используется как fallback, если DATABASE_URL не указывает на PostgreSQL
+// Для определения провайдера используется скрипт scripts/detect-db-provider.js
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -35,19 +47,21 @@ enum Role {
 /// Telegram ID используется как первичный ключ (bigint).
 model User {
   /// Telegram User ID (используется как PK)
-  id          BigInt   @id @db.BigInt
+  /// SQLite: хранится как String (Telegram ID может быть очень большим)
+  /// PostgreSQL: хранится как BigInt
+  id          String   @id @default("")
   
   /// Telegram username (может быть null)
-  username    String?  @db.VarChar(255)
+  username    String?
   
   /// Имя пользователя из Telegram
-  firstName   String   @map("first_name") @db.VarChar(255)
+  firstName   String   @map("first_name")
   
   /// Фамилия пользователя из Telegram (может быть null)
-  lastName    String?  @map("last_name") @db.VarChar(255)
+  lastName    String?  @map("last_name")
   
   /// URL фото профиля из Telegram (может быть null)
-  photoUrl    String?  @map("photo_url") @db.VarChar(500)
+  photoUrl    String?  @map("photo_url")
   
   /// Роль пользователя в системе
   role        Role     @default(user)
@@ -56,13 +70,13 @@ model User {
   isBlocked   Boolean  @default(false) @map("is_blocked")
   
   /// Дата создания записи
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  createdAt   DateTime @default(now()) @map("created_at")
   
   /// Дата последнего обновления
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @map("updated_at")
   
   /// Дата последнего входа
-  lastLoginAt DateTime? @map("last_login_at") @db.Timestamp(6)
+  lastLoginAt DateTime? @map("last_login_at")
   
   // Relations
   logs        Log[]
@@ -82,31 +96,35 @@ model Log {
   id        Int      @id @default(autoincrement())
   
   /// ID пользователя, выполнившего действие (nullable для системных действий)
-  userId    BigInt?  @map("user_id") @db.BigInt
+  /// SQLite: хранится как String
+  /// PostgreSQL: хранится как String (совместимо с User.id)
+  userId    String?  @map("user_id")
   
   /// Роль пользователя на момент действия
   role      Role
   
   /// Тип действия (например: "user.created", "admin.access")
-  action    String   @db.VarChar(100)
+  action    String
   
   /// Тип сущности, над которой выполнено действие (например: "user", "settings")
-  entity    String?  @db.VarChar(100)
+  entity    String?
   
   /// ID сущности, над которой выполнено действие
-  entityId  String?  @map("entity_id") @db.VarChar(255)
+  entityId  String?  @map("entity_id")
   
   /// IP адрес пользователя
-  ip        String   @db.VarChar(45) // IPv6 может быть до 45 символов
+  ip        String   // IPv6 может быть до 45 символов
   
   /// User Agent браузера
-  userAgent String   @map("user_agent") @db.Text
+  userAgent String   @map("user_agent")
   
   /// Дополнительные метаданные в формате JSON
-  meta      Json?
+  /// SQLite: хранится как Text (JSON string)
+  /// PostgreSQL: хранится как Json
+  meta      String?
   
   /// Дата создания лога
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at")
   
   // Relations
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTelegram } from "@/hooks/useTelegram";
-import { checkAuth } from "@/lib/auth";
+import { checkAuth } from "@/lib/auth/client";
 import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {

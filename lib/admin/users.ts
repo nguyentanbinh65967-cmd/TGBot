@@ -93,10 +93,10 @@ export async function getUsers(
     },
   });
 
-  // Преобразуем BigInt в string для сериализации
+  // ID уже в формате String (совместимо с SQLite и PostgreSQL)
   const serializedUsers = users.map((user) => ({
     ...user,
-    id: user.id.toString(),
+    id: String(user.id),
   }));
 
   return {
@@ -112,7 +112,7 @@ export async function getUsers(
  */
 export async function getUserById(userId: string) {
   const user = await db.user.findUnique({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
   });
 
   if (!user) {
@@ -121,7 +121,7 @@ export async function getUserById(userId: string) {
 
   return {
     ...user,
-    id: user.id.toString(),
+    id: String(user.id),
   };
 }
 
@@ -130,7 +130,7 @@ export async function getUserById(userId: string) {
  */
 export async function isSuperAdmin(userId: string): Promise<boolean> {
   const user = await db.user.findUnique({
-    where: { id: BigInt(userId) },
+    where: { id: userId },
     select: { role: true },
   });
 

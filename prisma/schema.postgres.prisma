@@ -1,0 +1,64 @@
+// Prisma Schema для PostgreSQL (альтернативная схема)
+// Используется, если DATABASE_URL указывает на PostgreSQL
+//
+// Для использования этой схемы:
+// 1. Установите DATABASE_URL="postgresql://..."
+// 2. Скопируйте этот файл в schema.prisma
+// 3. Или используйте скрипт scripts/switch-db-provider.js
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+  superadmin
+}
+
+model User {
+  id          BigInt   @id @db.BigInt
+  username    String?  @db.VarChar(255)
+  firstName   String   @map("first_name") @db.VarChar(255)
+  lastName    String?  @map("last_name") @db.VarChar(255)
+  photoUrl    String?  @map("photo_url") @db.VarChar(500)
+  role        Role     @default(user)
+  isBlocked   Boolean  @default(false) @map("is_blocked")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamp(6)
+  
+  logs        Log[]
+  
+  @@map("users")
+  @@index([role], name: "idx_users_role")
+  @@index([isBlocked], name: "idx_users_is_blocked")
+  @@index([lastLoginAt], name: "idx_users_last_login_at")
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt?  @map("user_id") @db.BigInt
+  role      Role
+  action    String   @db.VarChar(100)
+  entity    String?  @db.VarChar(100)
+  entityId  String?  @map("entity_id") @db.VarChar(255)
+  ip        String   @db.VarChar(45)
+  userAgent String   @map("user_agent") @db.Text
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("logs")
+  @@index([userId], name: "idx_logs_user_id")
+  @@index([action], name: "idx_logs_action")
+  @@index([entity, entityId], name: "idx_logs_entity")
+  @@index([createdAt(sort: Desc)], name: "idx_logs_created_at")
+  @@index([role], name: "idx_logs_role")
+}

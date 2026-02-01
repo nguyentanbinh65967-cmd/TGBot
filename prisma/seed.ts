@@ -17,12 +17,13 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // Получаем ID суперадминов из переменных окружения
+  // ID хранятся как String (совместимо с SQLite и PostgreSQL)
   const superadminIds = process.env.SUPERADMIN_IDS
-    ? process.env.SUPERADMIN_IDS.split(",").map((id) => BigInt(id.trim()))
+    ? process.env.SUPERADMIN_IDS.split(",").map((id) => id.trim())
     : [];
 
   const adminIds = process.env.ADMIN_IDS
-    ? process.env.ADMIN_IDS.split(",").map((id) => BigInt(id.trim()))
+    ? process.env.ADMIN_IDS.split(",").map((id) => id.trim())
     : [];
 
   // Создаем суперадминов (если их еще нет)

@@ -227,8 +227,15 @@ module.exports = nextConfig;
 
 **Build Command:**
 ```bash
-prisma generate && prisma migrate deploy && next build
+npm run vercel-build
 ```
+
+Или напрямую:
+```bash
+npx prisma generate && npx prisma migrate deploy && next build
+```
+
+**Важно:** Используйте `npx prisma` вместо `prisma`, так как на Vercel CLI может быть не в PATH.
 
 Это гарантирует:
 1. Prisma Client генерируется перед build
@@ -253,14 +260,18 @@ npx prisma migrate deploy
 {
   "scripts": {
     "build": "next build",
-    "postinstall": "prisma generate",
-    "migrate:deploy": "prisma migrate deploy",
-    "migrate:generate": "prisma generate"
+    "postinstall": "npx prisma generate || true",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "migrate:deploy": "npx prisma migrate deploy",
+    "migrate:generate": "npx prisma generate",
+    "vercel-build": "npm run prisma:generate && npm run prisma:migrate && npm run build"
   }
 }
 ```
 
 **Важно:**
+- Используйте `npx prisma` вместо `prisma` (CLI может быть не в PATH на Vercel)
 - `prisma generate` должен выполняться на Vercel перед build
 - `prisma migrate deploy` должен выполняться один раз, не на каждый запрос
 - НЕ используйте `prisma migrate dev` в production

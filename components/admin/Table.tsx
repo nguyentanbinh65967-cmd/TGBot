@@ -43,9 +43,23 @@ export function TableRow({ children, className = "" }: { children: React.ReactNo
   return <tr className={className}>{children}</tr>;
 }
 
-export function TableCell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function TableCell({ 
+  children, 
+  className = "", 
+  colSpan,
+  title
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+  colSpan?: number;
+  title?: string;
+}) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 ${className}`}>
+    <td 
+      colSpan={colSpan}
+      title={title}
+      className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 ${className}`}
+    >
       {children}
     </td>
   );

@@ -31,14 +31,14 @@ export async function logAdminAction(
 ): Promise<void> {
   await db.log.create({
     data: {
-      userId: BigInt(log.adminId),
+      userId: String(log.adminId),
       role: log.action.includes("admin") ? "admin" : "user", // Определяем роль по действию
       action: log.action,
       entity: log.details?.entity as string | undefined,
       entityId: log.details?.entityId ? String(log.details.entityId) : undefined,
       ip: log.ipAddress || "unknown",
       userAgent: log.userAgent || "unknown",
-      meta: log.details || {},
+      meta: typeof log.details === "object" ? JSON.stringify(log.details || {}) : String(log.details || ""),
     },
   });
 }
@@ -57,7 +57,7 @@ export async function getAdminLogs(
   const logs = await db.log.findMany({
     where: adminId
       ? {
-          userId: BigInt(adminId),
+          userId: String(adminId),
         }
       : undefined,
     orderBy: {
@@ -80,7 +80,7 @@ export async function getAdminLogs(
     adminId: log.userId ? Number(log.userId) : 0,
     adminName: log.user?.firstName || "System",
     action: log.action as LogAction,
-    details: log.meta as Record<string, any>,
+    details: typeof log.meta === "string" ? JSON.parse(log.meta) : (log.meta as Record<string, any>),
     ipAddress: log.ip,
     userAgent: log.userAgent,
   }));
@@ -99,7 +99,7 @@ export async function getAdminLogs(
  * @param meta - Дополнительные метаданные
  */
 export async function logAction(
-  userId: number | null,
+  userId: number | string | null,
   role: Role,
   action: string,
   entity?: string,
@@ -110,14 +110,14 @@ export async function logAction(
 ): Promise<void> {
   await db.log.create({
     data: {
-      userId: userId ? BigInt(userId) : null,
+      userId: userId ? String(userId) : null,
       role: role === "guest" ? "user" : (role as "user" | "admin" | "superadmin"), // guest не хранится в БД
       action,
       entity,
       entityId: entityId ? String(entityId) : undefined,
       ip: ip || "unknown",
       userAgent: userAgent || "unknown",
-      meta: meta || {},
+      meta: typeof meta === "object" ? JSON.stringify(meta || {}) : String(meta || ""),
     },
   });
 }

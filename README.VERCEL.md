@@ -46,7 +46,12 @@ SUPERADMIN_IDS=987654321
 
 **Build Command:**
 ```
-prisma generate && prisma migrate deploy && next build
+npm run vercel-build
+```
+
+Или напрямую:
+```
+npx prisma generate && npx prisma migrate deploy && next build
 ```
 
 Или используйте `vercel-build` script из `package.json`.

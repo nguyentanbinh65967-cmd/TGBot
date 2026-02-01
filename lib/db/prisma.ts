@@ -1,10 +1,14 @@
 /**
  * Prisma Client для работы с БД
  * 
+ * Поддерживает PostgreSQL и SQLite (fallback).
+ * Автоматически определяет провайдера из DATABASE_URL.
+ * 
  * Использование:
  * import { db } from "@/lib/db/prisma";
  * 
- * const user = await db.user.findUnique({ where: { id: BigInt(123456789) } });
+ * // ID пользователя (String для совместимости с SQLite и PostgreSQL)
+ * const user = await db.user.findUnique({ where: { id: "123456789" } });
  */
 
 import { PrismaClient } from "@prisma/client";
