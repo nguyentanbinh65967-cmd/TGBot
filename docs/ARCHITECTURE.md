@@ -303,8 +303,15 @@ types/
 - ✅ Автоматический fallback на SQLite
 
 **Ограничения SQLite:**
-- ⚠️ На Vercel SQLite работает только в read-only режиме (данные теряются при каждом деплое)
+- ⚠️ На Vercel SQLite использует `/tmp/dev.db` (ephemeral файловая система)
+- ⚠️ Данные теряются при каждом деплое на Vercel
 - ⚠️ Для production рекомендуется использовать PostgreSQL
+
+**Автоматическая настройка:**
+- Скрипт `scripts/ensure-env.js` автоматически устанавливает `DATABASE_URL` если он отсутствует
+- Скрипт `scripts/run-with-env.js` передает `DATABASE_URL` в Prisma CLI
+- Все Prisma команды работают без явной установки `DATABASE_URL`
+- Build не падает при отсутствии `DATABASE_URL` (используется SQLite fallback)
 
 ### **Схема (Prisma)**
 

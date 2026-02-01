@@ -80,7 +80,9 @@ export async function getAdminLogs(
     adminId: log.userId ? Number(log.userId) : 0,
     adminName: log.user?.firstName || "System",
     action: log.action as LogAction,
-    details: typeof log.meta === "string" ? JSON.parse(log.meta) : (log.meta as Record<string, any>),
+    details: typeof log.meta === "string" 
+      ? (log.meta ? JSON.parse(log.meta) : {}) 
+      : (log.meta || {}),
     ipAddress: log.ip,
     userAgent: log.userAgent,
   }));

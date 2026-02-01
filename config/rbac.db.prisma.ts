@@ -18,7 +18,7 @@ import type { Role } from "@/types/user";
  */
 export async function getUserRole(user: TelegramUser): Promise<Role> {
   const dbUser = await db.user.findUnique({
-    where: { id: BigInt(user.id) },
+    where: { id: String(user.id) },
     select: { role: true },
   });
 
@@ -62,7 +62,7 @@ export async function isSuperAdmin(user: TelegramUser): Promise<boolean> {
  */
 export async function upsertUser(user: TelegramUser) {
   return await db.user.upsert({
-    where: { id: BigInt(user.id) },
+    where: { id: String(user.id) },
     update: {
       firstName: user.first_name,
       lastName: user.last_name,
@@ -72,7 +72,7 @@ export async function upsertUser(user: TelegramUser) {
       updatedAt: new Date(),
     },
     create: {
-      id: BigInt(user.id),
+      id: String(user.id),
       firstName: user.first_name,
       lastName: user.last_name,
       username: user.username,

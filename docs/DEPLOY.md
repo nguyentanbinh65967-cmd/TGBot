@@ -9,7 +9,25 @@
 1. **Автоматическое определение провайдера:**
    - Если `DATABASE_URL` начинается с `postgresql://` или `postgres://` → используется PostgreSQL
    - Если `DATABASE_URL` начинается с `file:` → используется SQLite
-   - Если `DATABASE_URL` не установлен → автоматически используется SQLite (`file:./dev.db`)
+   - Если `DATABASE_URL` не установлен → автоматически используется SQLite
+
+2. **Автоматическая генерация DATABASE_URL:**
+   - Скрипт `scripts/ensure-env.js` автоматически устанавливает `DATABASE_URL` перед запуском Prisma команд
+   - Скрипт `scripts/run-with-env.js` передает `DATABASE_URL` в дочерние процессы (Prisma CLI)
+   - Локально: `file:./dev.db` (в корне проекта)
+   - На Vercel: `file:/tmp/dev.db` (ephemeral - данные теряются между деплоями)
+   - Файл `.env.local` создается автоматически, если его нет и `DATABASE_URL` отсутствует
+
+3. **Логирование провайдера:**
+   - Все скрипты логируют используемый провайдер БД
+   - Пример: `✅ Using SQLite: file:./dev.db` или `🐘 Using PostgreSQL database`
+
+3. **Где хранится SQLite файл:**
+   - **Локально:** `./dev.db` (в корне проекта)
+   - **На Vercel:** `/tmp/dev.db` (ephemeral файловая система)
+     - ⚠️ **Важно:** На Vercel `/tmp` очищается при каждом деплое
+     - Данные в SQLite на Vercel не сохраняются между деплоями
+     - Для production используйте PostgreSQL
 
 2. **Схема базы данных:**
    - Основная схема (`prisma/schema.prisma`) настроена на SQLite по умолчанию
@@ -19,8 +37,10 @@
      - `Log.meta`: `String` (JSON string) вместо `Json` для SQLite
 
 3. **Build Pipeline:**
-   - `npm run prisma:generate` → генерирует Prisma Client
-   - `npm run prisma:migrate` → применяет миграции (deploy для PostgreSQL, dev для SQLite)
+   - `npm run prisma:generate` → устанавливает DATABASE_URL → генерирует Prisma Client
+   - `npm run prisma:migrate` → устанавливает DATABASE_URL → применяет миграции (deploy для PostgreSQL, db push для SQLite)
+   - `npm run vercel-build` → использует `setup-database.js` → полная настройка БД → build
+   - Все команды работают даже если `DATABASE_URL` не установлен (используется SQLite fallback)
 
 ---
 
@@ -46,13 +66,13 @@
    - Vercel автоматически выполнит `npm run vercel-build`
    - Это запустит: `prisma generate` → `prisma migrate deploy` → `next build`
 
-### Вариант 2: С SQLite (fallback, для тестирования)
+### Вариант 2: С SQLite (fallback, автоматически)
 
-⚠️ **Внимание:** SQLite на Vercel работает только в read-only режиме из-за ограничений файловой системы. Для production используйте PostgreSQL.
+⚠️ **Внимание:** SQLite на Vercel использует `/tmp/dev.db` (ephemeral). Данные теряются при каждом деплое. Для production используйте PostgreSQL.
 
-1. **Настройте Environment Variables в Vercel:**
+1. **Не устанавливайте DATABASE_URL** (или установите `DATABASE_URL=file:/tmp/dev.db`):
    ```
-   DATABASE_URL=file:./dev.db
+   # DATABASE_URL не нужен - будет использован SQLite автоматически
    BOT_TOKEN=your_bot_token
    ADMIN_IDS=123456789,987654321
    SUPERADMIN_IDS=987654321
@@ -60,18 +80,20 @@
    ```
 
 2. **Деплой:**
-   - Vercel выполнит миграции и создаст SQLite файл
-   - ⚠️ Данные будут теряться при каждом деплое (файловая система Vercel не персистентна)
+   - Скрипт `ensure-env.js` автоматически установит `DATABASE_URL=file:/tmp/dev.db`
+   - Vercel выполнит миграции и создаст SQLite файл в `/tmp`
+   - ⚠️ Данные будут теряться при каждом деплое (ephemeral файловая система)
 
 ---
 
 ## Локальная разработка
 
-### С SQLite (по умолчанию)
+### С SQLite (по умолчанию, автоматически)
 
-1. **Создайте `.env.local`:**
+1. **Создайте `.env.local` (или оставьте пустым - DATABASE_URL сгенерируется автоматически):**
    ```env
-   DATABASE_URL="file:./dev.db"
+   # DATABASE_URL не обязателен - будет использован file:./dev.db автоматически
+   # DATABASE_URL="file:./dev.db"  # Опционально, если хотите указать явно
    BOT_TOKEN="your_bot_token"
    ADMIN_IDS=123456789
    SUPERADMIN_IDS=123456789
@@ -81,15 +103,19 @@
 2. **Настройте БД:**
    ```bash
    npm run db:setup
-   # Или вручную:
-   npx prisma generate
-   npx prisma migrate dev --name init
+   # Или вручную (DATABASE_URL будет установлен автоматически):
+   npm run prisma:generate
+   npm run prisma:migrate
    ```
 
 3. **Запустите seed (опционально):**
    ```bash
    npx prisma db seed
    ```
+   
+4. **SQLite файл:**
+   - Создается автоматически в `./dev.db` (корень проекта)
+   - Добавьте `dev.db` в `.gitignore` (если еще не добавлен)
 
 ### С PostgreSQL
 
@@ -163,17 +189,25 @@ node scripts/setup-database.js
 
 ## Troubleshooting
 
-### Ошибка: "DATABASE_URL is not set"
+### Ошибка: "Environment variable not found: DATABASE_URL"
 
 **Решение:**
-- Убедитесь, что `DATABASE_URL` установлен в Environment Variables (Vercel) или `.env.local` (локально)
-- Или используйте SQLite fallback (не устанавливайте `DATABASE_URL`)
+- ✅ **Автоматически исправлено:** Скрипт `ensure-env.js` автоматически устанавливает `DATABASE_URL` перед Prisma командами
+- Скрипт `run-with-env.js` передает `DATABASE_URL` в дочерние процессы (Prisma CLI)
+- SQLite fallback включается автоматически:
+  - **Локально:** `file:./dev.db` (в корне проекта)
+  - **На Vercel:** `file:/tmp/dev.db` (ephemeral - данные теряются между деплоями)
+- Если ошибка все еще возникает:
+  - Проверьте, что скрипты `scripts/ensure-env.js` и `scripts/run-with-env.js` существуют
+  - В `package.json` скрипты используют `node scripts/run-with-env.js`
+  - Убедитесь, что `.env.local` не блокирует установку `DATABASE_URL`
 
 ### Ошибка: "Migration failed"
 
 **Решение:**
-- Для SQLite: используйте `npx prisma migrate dev`
+- Для SQLite: используйте `npx prisma db push` (не требует shadow database)
 - Для PostgreSQL: используйте `npx prisma migrate deploy`
+- Скрипт `setup-database.js` автоматически выбирает правильный метод
 - Проверьте, что БД доступна и credentials правильные
 
 ### Ошибка: "Prisma Client not generated"

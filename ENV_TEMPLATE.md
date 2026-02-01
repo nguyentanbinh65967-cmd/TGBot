@@ -17,11 +17,14 @@
 # - Supabase: postgresql://postgres:pass@db.xxx.supabase.co:5432/postgres?sslmode=require
 # - Локальная: postgresql://postgres:password@localhost:5432/taekwondo_school
 #
-# SQLite (fallback, если DATABASE_URL не установлен):
-# - Автоматически используется: file:./dev.db
+# SQLite (fallback, автоматически включается если DATABASE_URL не установлен):
+# - Локально: file:./dev.db
+# - На Vercel: file:/tmp/dev.db (ephemeral - данные теряются между деплоями)
 # - Или явно: DATABASE_URL="file:./dev.db"
 #
-# Если переменная не установлена, автоматически используется SQLite (file:./dev.db)
+# Если переменная не установлена, автоматически используется SQLite:
+# - Локально: file:./dev.db
+# - На Vercel: file:/tmp/dev.db
 DATABASE_URL="file:./dev.db"
 # Или для PostgreSQL:
 # DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
