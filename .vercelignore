@@ -43,8 +43,8 @@ docs/
 *.md
 !README.md
 
-# Scripts (опционально)
-scripts/
+# Scripts - НЕ игнорируем, нужны для build
+# scripts/  ← Закомментировано, так как scripts/setup-database.js нужен для vercel-build
 
 # Test files
 **/__tests__/**
