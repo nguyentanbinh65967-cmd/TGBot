@@ -36,6 +36,13 @@ DATABASE_URL="file:./dev.db"
 # Получить: https://t.me/BotFather → /newbot
 BOT_TOKEN="your_bot_token_here"
 
+# DEV: разрешить вход в админку с десктопа (ТОЛЬКО ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ)
+# ВНИМАНИЕ: Никогда не включайте это в production окружении.
+# DEV_DESKTOP_ADMIN управляет серверной мидлварью (/admin)
+# NEXT_PUBLIC_DEV_DESKTOP_ADMIN управляет клиентской проверкой в админке
+DEV_DESKTOP_ADMIN="false"
+NEXT_PUBLIC_DEV_DESKTOP_ADMIN="false"
+
 # ============================================
 # ADMIN USERS
 # ============================================

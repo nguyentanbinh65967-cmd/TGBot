@@ -121,6 +121,8 @@ function createUnauthorizedRedirect(request: NextRequest): NextResponse {
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
+  const isDev = process.env.NODE_ENV !== "production";
+
   // Пропускаем статические файлы и системные роуты
   if (
     pathname.startsWith("/_next") ||
@@ -129,6 +131,23 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.includes(".") // Статические файлы
   ) {
     return NextResponse.next();
+  }
+
+  // 🔧 DEV-режим: разрешить вход в админку с десктопа без Telegram
+  // Включается, только если:
+  // - NODE_ENV !== "production"
+  // - DEV_DESKTOP_ADMIN === "true" в .env.local
+  if (
+    isDev &&
+    process.env.DEV_DESKTOP_ADMIN === "true" &&
+    pathname.startsWith("/admin")
+  ) {
+    const response = NextResponse.next();
+    // Подставляем "фейкового" супер-админа для серверной части
+    response.headers.set("x-user-id", "0");
+    response.headers.set("x-user-role", "superadmin");
+    response.headers.set("x-user-username", "dev_desktop_admin");
+    return response;
   }
 
   // Проверяем, нужно ли защищать этот роут

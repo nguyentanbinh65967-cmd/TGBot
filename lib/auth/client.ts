@@ -61,6 +61,28 @@ export function getUserRole(telegramId: number): UserRole {
  * @returns результат проверки авторизации
  */
 export function checkAuth(user: TelegramUser | null | undefined): AuthResult {
+  // DEV-режим: разрешить вход в админку с десктопа без Telegram WebApp
+  // Включается, только если:
+  // - NODE_ENV === "development"
+  // - NEXT_PUBLIC_DEV_DESKTOP_ADMIN === "true"
+  if (
+    typeof window !== "undefined" &&
+    process.env.NODE_ENV === "development" &&
+    process.env.NEXT_PUBLIC_DEV_DESKTOP_ADMIN === "true" &&
+    (!user || !user.id)
+  ) {
+    return {
+      isAuthenticated: true,
+      isAdmin: true,
+      user: {
+        id: 0,
+        firstName: "Dev Desktop Admin",
+        username: "dev_desktop_admin",
+        role: "admin",
+      },
+    };
+  }
+
   // Если пользователь не передан
   if (!user || !user.id) {
     return {
