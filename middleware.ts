@@ -133,17 +133,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // 🔧 DEV-режим: разрешить вход в админку с десктопа без Telegram
-  // Включается, только если:
-  // - NODE_ENV !== "production"
-  // - DEV_DESKTOP_ADMIN === "true" в .env.local
-  if (
-    isDev &&
-    process.env.DEV_DESKTOP_ADMIN === "true" &&
-    pathname.startsWith("/admin")
-  ) {
+  // 🔧 DEV-режим: разрешить вход в админку и admin API с десктопа без Telegram
+  // Работает ТОЛЬКО вне production.
+  if (isDev && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))) {
     const response = NextResponse.next();
-    // Подставляем "фейкового" супер-админа для серверной части
+    // Подставляем "фейкового" супер-админа для серверной части (только локально)
     response.headers.set("x-user-id", "0");
     response.headers.set("x-user-role", "superadmin");
     response.headers.set("x-user-username", "dev_desktop_admin");
