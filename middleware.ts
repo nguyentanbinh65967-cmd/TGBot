@@ -157,8 +157,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // ✅ Десктоп-логин: если есть специальная кука, пропускаем без Telegram initData
   // Работает и локально, и на Vercel (production).
-  const desktopAdminCookie = request.cookies.get("desktop_admin")?.value;
-  if (desktopAdminCookie === "1") {
+  const desktopAdminCookie = request.cookies.get("desktop_admin");
+  const desktopAdminValue = desktopAdminCookie?.value;
+  
+  // Проверяем куку (может быть "1" или "true" для совместимости)
+  if (desktopAdminValue === "1" || desktopAdminValue === "true") {
     const response = NextResponse.next();
     response.headers.set("x-user-id", "desktop-admin");
     response.headers.set("x-user-role", "superadmin");
@@ -177,6 +180,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         "Unauthorized: initData is required. Send it in Authorization header (Bearer initData) or in request body."
       );
     }
+    
+    // Для страниц админки без авторизации - редирект на страницу логина
+    // Это удобнее, чем показывать /unauthorized
+    if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/admin/login";
+      return NextResponse.redirect(loginUrl);
+    }
+    
     return createUnauthorizedRedirect(request);
   }
 

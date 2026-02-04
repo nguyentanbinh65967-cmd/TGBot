@@ -34,8 +34,8 @@ export default function AdminLoginPage() {
       }
 
       // Успешный вход - перенаправляем на админ-панель
-      router.push("/admin");
-      router.refresh();
+      // Используем window.location для полной перезагрузки, чтобы кука точно применилась
+      window.location.href = "/admin";
     } catch (err) {
       setError("Ошибка подключения к серверу");
       setLoading(false);

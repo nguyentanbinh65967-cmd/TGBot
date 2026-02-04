@@ -54,9 +54,19 @@ function UnauthorizedContent() {
               <span className="mr-2">•</span>
               <span>Иметь роль администратора или суперадминистратора</span>
             </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>Войти через десктоп (логин/пароль)</span>
+            </li>
           </ul>
 
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link
+              href="/admin/login"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Войти как админ (Desktop)
+            </Link>
             <Link
               href="/"
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
