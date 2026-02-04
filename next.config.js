@@ -5,10 +5,34 @@ const nextConfig = {
   
   // Security headers
   async headers() {
+    const isDev = process.env.NODE_ENV !== "production";
+    
+    // CSP для development и production
+    // В development разрешаем unsafe-eval для Next.js HMR
+    // В production запрещаем для безопасности
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org" + (isDev ? " 'unsafe-eval'" : ""),
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://telegram.org https://*.telegram.org https://api.telegram.org",
+      "frame-src 'self' https://telegram.org",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+    
     return [
       {
         source: "/:path*",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspDirectives,
+          },
           {
             key: "X-DNS-Prefetch-Control",
             value: "on",
