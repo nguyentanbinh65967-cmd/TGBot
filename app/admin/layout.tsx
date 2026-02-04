@@ -164,7 +164,7 @@ export default function AdminLayout({
                   Desktop Admin
                 </div>
               ) : (
-                authResult.user && (
+                authResult?.user && (
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     {authResult.user.firstName}
                   </div>
@@ -224,7 +224,7 @@ export default function AdminLayout({
                 </button>
               </div>
             ) : (
-              authResult.user && (
+              authResult?.user && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   <div className="font-medium">{authResult.user.firstName}</div>
                   {authResult.user.username && (
