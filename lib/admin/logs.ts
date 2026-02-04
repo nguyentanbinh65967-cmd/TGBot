@@ -125,11 +125,22 @@ export async function getLogs(
   });
 
   // Преобразуем meta из String (JSON) в объект, если нужно
-  const serializedLogs = logs.map((log) => ({
-    ...log,
-    userId: log.userId ? String(log.userId) : null,
-    meta: typeof log.meta === "string" ? JSON.parse(log.meta) : log.meta,
-  }));
+  const serializedLogs = logs.map((log) => {
+    let parsedMeta = log.meta;
+    if (typeof log.meta === "string" && log.meta.trim()) {
+      try {
+        parsedMeta = JSON.parse(log.meta);
+      } catch (e) {
+        // Если не удалось распарсить, оставляем как строку
+        parsedMeta = log.meta;
+      }
+    }
+    return {
+      ...log,
+      userId: log.userId ? String(log.userId) : null,
+      meta: parsedMeta,
+    };
+  });
 
   return {
     logs: serializedLogs,

@@ -21,32 +21,49 @@ interface PageProps {
 }
 
 export default async function AdminLogsPage({ searchParams }: PageProps) {
-  // Парсим параметры
-  const page = parseInt(searchParams.page || "1", 10);
-  const action = searchParams.action;
-  const entity = searchParams.entity;
-  const role = (searchParams.role as Role | "all") || "all";
-  const userId = searchParams.userId;
-  const dateFrom = searchParams.dateFrom ? new Date(searchParams.dateFrom) : undefined;
-  const dateTo = searchParams.dateTo ? new Date(searchParams.dateTo) : undefined;
+  try {
+    // Парсим параметры
+    const page = parseInt(searchParams.page || "1", 10);
+    const action = searchParams.action;
+    const entity = searchParams.entity;
+    const role = (searchParams.role as Role | "all") || "all";
+    const userId = searchParams.userId;
+    const dateFrom = searchParams.dateFrom ? new Date(searchParams.dateFrom) : undefined;
+    const dateTo = searchParams.dateTo ? new Date(searchParams.dateTo) : undefined;
 
-  // Фильтры
-  const filters: LogsFilters = {
-    action,
-    entity,
-    role: role !== "all" ? role : undefined,
-    userId,
-    dateFrom,
-    dateTo,
-  };
+    // Фильтры
+    const filters: LogsFilters = {
+      action,
+      entity,
+      role: role !== "all" ? role : undefined,
+      userId,
+      dateFrom,
+      dateTo,
+    };
 
-  // Получаем логи и статистику параллельно
-  const [result, stats] = await Promise.all([
-    getLogs(filters, { page, pageSize: 50 }),
-    getLogsStats24h(),
-  ]);
+    // Получаем логи и статистику параллельно
+    const [result, stats] = await Promise.all([
+      getLogs(filters, { page, pageSize: 50 }).catch((err) => {
+        console.error("Error loading logs:", err);
+        return {
+          logs: [],
+          total: 0,
+          page: 1,
+          totalPages: 0,
+        };
+      }),
+      getLogsStats24h().catch((err) => {
+        console.error("Error loading stats:", err);
+        return {
+          logsToday: 0,
+          adminActionsToday: 0,
+          distinctActiveAdmins: 0,
+          actionsByType: [],
+        };
+      }),
+    ]);
 
-  return (
+    return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Логи действий</h1>
@@ -251,5 +268,27 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
         </div>
       )}
     </div>
-  );
+    );
+  } catch (error: any) {
+    console.error("Error loading logs page:", error);
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">
+            Ошибка загрузки логов
+          </h2>
+          <p className="text-red-700 dark:text-red-300 mb-4">
+            {error?.message || "Не удалось загрузить логи. Проверьте настройки базы данных."}
+          </p>
+          {process.env.NODE_ENV === "development" && error?.stack && (
+            <div className="bg-white dark:bg-gray-800 rounded p-4 mt-4">
+              <p className="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                {error.stack}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 }

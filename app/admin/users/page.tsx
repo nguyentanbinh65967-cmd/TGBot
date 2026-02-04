@@ -19,17 +19,21 @@ interface PageProps {
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  // Получаем текущего пользователя из headers
-  const headersList = await headers();
-  const currentUserId = headersList.get("x-user-id");
-  const currentUserRole = headersList.get("x-user-role");
+  try {
+    // Получаем текущего пользователя из headers
+    const headersList = await headers();
+    const currentUserId = headersList.get("x-user-id");
+    const currentUserRole = headersList.get("x-user-role");
 
-  if (!currentUserId) {
-    return <div>Unauthorized</div>;
-  }
+    if (!currentUserId) {
+      return <div>Unauthorized</div>;
+    }
 
-  // Проверяем, является ли текущий пользователь суперадмином
-  const isCurrentUserSuperAdmin = await isSuperAdmin(currentUserId);
+    // Для десктоп-админа или dev-админа считаем суперадмином
+    const isDesktopAdmin = currentUserId === "desktop-admin" || currentUserId === "0";
+    const isCurrentUserSuperAdmin = isDesktopAdmin 
+      ? true 
+      : await isSuperAdmin(currentUserId).catch(() => false);
 
   // Парсим параметры
   const page = parseInt(searchParams.page || "1", 10);
@@ -52,10 +56,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     lastLoginDays,
   };
 
-  // Получаем пользователей
-  const result = await getUsers(filters, sort, { page, pageSize: 20 });
+    // Получаем пользователей
+    const result = await getUsers(filters, sort, { page, pageSize: 20 });
 
-  return (
+    return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Пользователи</h1>
@@ -199,5 +203,27 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         </div>
       )}
     </div>
-  );
+    );
+  } catch (error: any) {
+    console.error("Error loading users page:", error);
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">
+            Ошибка загрузки пользователей
+          </h2>
+          <p className="text-red-700 dark:text-red-300 mb-4">
+            {error?.message || "Не удалось загрузить список пользователей. Проверьте настройки базы данных."}
+          </p>
+          {process.env.NODE_ENV === "development" && error?.stack && (
+            <div className="bg-white dark:bg-gray-800 rounded p-4 mt-4">
+              <p className="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                {error.stack}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 }
