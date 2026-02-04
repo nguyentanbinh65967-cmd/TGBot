@@ -36,11 +36,13 @@ export async function POST(request: NextRequest) {
     // На Vercel всегда HTTPS, поэтому secure должен быть true
     const isProduction = process.env.NODE_ENV === "production";
     const isVercel = process.env.VERCEL === "1";
+    const useSecure = isProduction || isVercel;
     
+    // Устанавливаем куку с правильными настройками для Vercel
     response.cookies.set("desktop_admin", "1", {
       httpOnly: false, // Нужно для чтения на клиенте
-      secure: isProduction || isVercel, // HTTPS на Vercel и в production
-      sameSite: "lax",
+      secure: useSecure, // HTTPS на Vercel и в production
+      sameSite: "lax", // Lax для безопасности
       maxAge: 60 * 60 * 24 * 7, // 7 дней
       path: "/",
       // Не указываем domain, чтобы кука работала на всех поддоменах Vercel

@@ -33,7 +33,29 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Успешный вход - перенаправляем на админ-панель
+      // Успешный вход - устанавливаем куку на клиенте (на случай, если серверная установка не сработала)
+      const isProduction = window.location.protocol === "https:";
+      const maxAge = 60 * 60 * 24 * 7; // 7 дней
+      const cookieString = `desktop_admin=1; Path=/; Max-Age=${maxAge}; ${isProduction ? "Secure; " : ""}SameSite=Lax`;
+      document.cookie = cookieString;
+      
+      // Небольшая задержка, чтобы кука точно установилась
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      
+      // Проверяем куку перед редиректом
+      const cookies = document.cookie.split(";");
+      const hasCookie = cookies.some((c) => {
+        const trimmed = c.trim();
+        return trimmed.startsWith("desktop_admin=") && (trimmed.includes("=1") || trimmed.includes("=true"));
+      });
+      
+      if (!hasCookie) {
+        setError("Кука не установилась. Попробуйте снова или проверьте настройки браузера.");
+        setLoading(false);
+        return;
+      }
+      
+      // Перенаправляем на админ-панель
       // Используем window.location для полной перезагрузки, чтобы кука точно применилась
       window.location.href = "/admin";
     } catch (err) {

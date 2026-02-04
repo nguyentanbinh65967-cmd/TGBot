@@ -28,23 +28,75 @@ export default function AdminLayout({
     }
   };
 
+  // Функция для проверки куки десктоп-админа
+  const checkDesktopAdminCookie = (): boolean => {
+    if (typeof window === "undefined") return false;
+    
+    try {
+      const cookies = document.cookie.split(";");
+      for (const cookie of cookies) {
+        const trimmed = cookie.trim();
+        if (trimmed.startsWith("desktop_admin=")) {
+          const value = trimmed.split("=")[1]?.trim();
+          if (value === "1" || value === "true") {
+            return true;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Ошибка при проверке куки:", error);
+    }
+    return false;
+  };
+
   useEffect(() => {
     setMounted(true);
-    // Проверяем куку десктоп-админа
-    if (typeof window !== "undefined") {
-      const cookies = document.cookie.split(";");
-      const desktopAdminCookie = cookies.find((c) => c.trim().startsWith("desktop_admin="));
-      if (desktopAdminCookie?.includes("desktop_admin=1")) {
-        setDesktopAdmin(true);
-      }
+    
+    // Проверяем куку десктоп-админа при монтировании
+    const hasCookie = checkDesktopAdminCookie();
+    if (hasCookie) {
+      setDesktopAdmin(true);
+      return;
     }
+    
+    // Также проверяем периодически (на случай, если кука установилась после монтирования)
+    // Особенно важно после редиректа с /admin/login
+    const interval = setInterval(() => {
+      const hasCookieNow = checkDesktopAdminCookie();
+      if (hasCookieNow) {
+        setDesktopAdmin(true);
+        clearInterval(interval);
+      }
+    }, 300);
+    
+    // Останавливаем проверку через 5 секунд
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
+    // Если есть кука десктоп-админа, не нужно ждать Telegram
+    if (desktopAdmin) {
+      return;
+    }
+    
     if (isReady) {
       setAuthResult(checkAuth(user));
+    } else {
+      // Если нет Telegram в браузере, проверяем куку еще раз
+      if (typeof window !== "undefined" && !window.Telegram?.WebApp) {
+        if (checkDesktopAdminCookie()) {
+          setDesktopAdmin(true);
+        }
+      }
     }
-  }, [isReady, user]);
+  }, [isReady, user, desktopAdmin]);
 
   // Применяем Telegram theme colors
   useEffect(() => {
@@ -77,7 +129,22 @@ export default function AdminLayout({
   }, [webApp]);
 
   // Показываем загрузку до гидрации
-  if (!mounted || (!desktopAdmin && !isReady)) {
+  // Если есть кука десктоп-админа, не ждем Telegram
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Если нет куки десктоп-админа, ждем Telegram (но только если Telegram доступен)
+  // Если Telegram не доступен (обычный браузер), не ждем isReady
+  const hasTelegram = typeof window !== "undefined" && window.Telegram?.WebApp;
+  if (!desktopAdmin && hasTelegram && !isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
