@@ -6,13 +6,28 @@ const nextConfig = {
   // Security headers
   async headers() {
     const isDev = process.env.NODE_ENV !== "production";
+    const isVercel = process.env.VERCEL === "1";
+    // В production (включая Vercel) не используем unsafe-eval
+    const isProduction = isVercel || !isDev;
     
     // CSP для development и production
     // В development разрешаем unsafe-eval для Next.js HMR
-    // В production запрещаем для безопасности
+    // В production (включая Vercel) запрещаем для безопасности
+    const scriptSrc = [
+      "'self'",
+      "'unsafe-inline'",
+      "https://telegram.org",
+      "https://*.telegram.org",
+    ];
+    
+    // Добавляем unsafe-eval только в development (не на Vercel)
+    if (!isProduction) {
+      scriptSrc.push("'unsafe-eval'");
+    }
+    
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org" + (isDev ? " 'unsafe-eval'" : ""),
+      `script-src ${scriptSrc.join(" ")}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",

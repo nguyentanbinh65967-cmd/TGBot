@@ -128,6 +128,11 @@ export default function AdminLayout({
     }
   }, [webApp]);
 
+  // Если это страница логина, показываем её без проверки авторизации
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
   // Показываем загрузку до гидрации
   // Если есть кука десктоп-админа, не ждем Telegram
   if (!mounted) {
