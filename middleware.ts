@@ -127,6 +127,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth/check") || // Публичный endpoint для проверки
+    pathname === "/admin/login" || // Страница логина для десктоп-админа
+    pathname.startsWith("/api/admin/desktop-login") || // API логина для десктоп-админа
+    pathname.startsWith("/api/admin/desktop-logout") || // API выхода для десктоп-админа
     pathname === "/unauthorized" || // Страница unauthorized доступна всем
     pathname.includes(".") // Статические файлы
   ) {
@@ -150,6 +153,17 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (!isAdminRoute) {
     // Для не-админ роутов просто пропускаем
     return NextResponse.next();
+  }
+
+  // ✅ Десктоп-логин: если есть специальная кука, пропускаем без Telegram initData
+  // Работает и локально, и на Vercel (production).
+  const desktopAdminCookie = request.cookies.get("desktop_admin")?.value;
+  if (desktopAdminCookie === "1") {
+    const response = NextResponse.next();
+    response.headers.set("x-user-id", "desktop-admin");
+    response.headers.set("x-user-role", "superadmin");
+    response.headers.set("x-user-username", "desktop_admin");
+    return response;
   }
 
   // Извлекаем initData

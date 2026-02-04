@@ -80,6 +80,7 @@ model User {
   
   // Relations
   logs        Log[]
+  progress    UserProgress[]
   
   @@map("users")
   @@index([role], name: "idx_users_role")
@@ -135,4 +136,144 @@ model Log {
   @@index([entity, entityId], name: "idx_logs_entity")
   @@index([createdAt(sort: Desc)], name: "idx_logs_created_at")
   @@index([role], name: "idx_logs_role")
+}
+
+/// Направления обучения (например: "Тхэквондо для начинающих", "Спортивное тхэквондо")
+model Direction {
+  /// ID направления (автоинкремент)
+  id          Int      @id @default(autoincrement())
+  
+  /// Название направления
+  name        String
+  
+  /// Описание направления
+  description String?
+  
+  /// Порядок отображения
+  order       Int      @default(0)
+  
+  /// Активно ли направление
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  /// Дата создания
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  /// Дата обновления
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  courses     Course[]
+  
+  @@map("directions")
+  @@index([order], name: "idx_directions_order")
+  @@index([isActive], name: "idx_directions_is_active")
+}
+
+/// Курсы в рамках направления
+model Course {
+  /// ID курса (автоинкремент)
+  id          Int      @id @default(autoincrement())
+  
+  /// ID направления
+  directionId Int      @map("direction_id")
+  
+  /// Название курса
+  name        String
+  
+  /// Описание курса
+  description String?
+  
+  /// Порядок отображения в рамках направления
+  order       Int      @default(0)
+  
+  /// Активен ли курс
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  /// Дата создания
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  /// Дата обновления
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  direction   Direction @relation(fields: [directionId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  
+  @@map("courses")
+  @@index([directionId], name: "idx_courses_direction_id")
+  @@index([order], name: "idx_courses_order")
+  @@index([isActive], name: "idx_courses_is_active")
+}
+
+/// Уроки в рамках курса
+model Lesson {
+  /// ID урока (автоинкремент)
+  id          Int      @id @default(autoincrement())
+  
+  /// ID курса
+  courseId    Int      @map("course_id")
+  
+  /// Название урока
+  name        String
+  
+  /// Описание урока
+  description String?
+  
+  /// Содержимое урока (текст, HTML, markdown)
+  content     String?
+  
+  /// Порядок отображения в рамках курса
+  order       Int      @default(0)
+  
+  /// Активен ли урок
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  /// Дата создания
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  /// Дата обновления
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    UserProgress[]
+  
+  @@map("lessons")
+  @@index([courseId], name: "idx_lessons_course_id")
+  @@index([order], name: "idx_lessons_order")
+  @@index([isActive], name: "idx_lessons_is_active")
+}
+
+/// Прогресс пользователя по урокам и курсам
+model UserProgress {
+  /// ID записи (автоинкремент)
+  id          Int      @id @default(autoincrement())
+  
+  /// ID пользователя
+  userId      String   @map("user_id")
+  
+  /// ID урока
+  lessonId    Int      @map("lesson_id")
+  
+  /// Завершен ли урок
+  isCompleted Boolean  @default(false) @map("is_completed")
+  
+  /// Дата начала прохождения
+  startedAt   DateTime? @map("started_at")
+  
+  /// Дата завершения
+  completedAt DateTime? @map("completed_at")
+  
+  /// Дата создания записи
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@map("user_progress")
+  @@unique([userId, lessonId], name: "unique_user_lesson")
+  @@index([userId], name: "idx_user_progress_user_id")
+  @@index([lessonId], name: "idx_user_progress_lesson_id")
+  @@index([isCompleted], name: "idx_user_progress_is_completed")
 }
