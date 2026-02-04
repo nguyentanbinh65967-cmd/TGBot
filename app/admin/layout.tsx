@@ -150,6 +150,9 @@ export default function AdminLayout({
     { href: "/admin/logs", label: "Логи", icon: "📝" },
   ];
 
+  // Извлекаем user для типобезопасности
+  const telegramUser = authResult?.user;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Мобильное меню (сверху) */}
@@ -164,9 +167,9 @@ export default function AdminLayout({
                   Desktop Admin
                 </div>
               ) : (
-                authResult?.user && (
+                telegramUser && (
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {authResult.user.firstName}
+                    {telegramUser.firstName}
                   </div>
                 )
               )}
@@ -224,15 +227,15 @@ export default function AdminLayout({
                 </button>
               </div>
             ) : (
-              authResult?.user && (
+              telegramUser && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <div className="font-medium">{authResult.user.firstName}</div>
-                  {authResult.user.username && (
-                    <div className="text-xs">@{authResult.user.username}</div>
+                  <div className="font-medium">{telegramUser.firstName}</div>
+                  {telegramUser.username && (
+                    <div className="text-xs">@{telegramUser.username}</div>
                   )}
                   <div className="text-xs mt-1">
                     <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                      {authResult.user.role}
+                      {telegramUser.role}
                     </span>
                   </div>
                 </div>
