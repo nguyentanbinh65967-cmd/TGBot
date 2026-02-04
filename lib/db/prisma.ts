@@ -17,6 +17,12 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Проверяем DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.warn("⚠️ DATABASE_URL not set, Prisma will use default connection");
+}
+
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({

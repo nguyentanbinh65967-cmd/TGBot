@@ -200,6 +200,23 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // Ошибка валидации initData
     const errorMessage = error instanceof Error ? error.message : "Invalid initData";
     
+    // Если BOT_TOKEN не установлен, это не критично для десктоп-логина
+    // Но для Telegram-авторизации это ошибка
+    if (errorMessage.includes("BOT_TOKEN")) {
+      console.warn("BOT_TOKEN not configured - Telegram auth disabled, desktop login still available");
+      // Для API возвращаем ошибку, для страниц - редирект на логин
+      if (pathname.startsWith("/api")) {
+        return createApiErrorResponse(401, "BOT_TOKEN not configured. Please configure BOT_TOKEN for Telegram authentication.");
+      }
+      // Для страниц админки без BOT_TOKEN - редирект на логин
+      if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = "/admin/login";
+        return NextResponse.redirect(loginUrl);
+      }
+      return createUnauthorizedRedirect(request);
+    }
+    
     if (pathname.startsWith("/api")) {
       return createApiErrorResponse(401, `Unauthorized: ${errorMessage}`);
     }
