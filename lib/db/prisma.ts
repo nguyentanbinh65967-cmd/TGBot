@@ -63,18 +63,36 @@ if (databaseUrl.startsWith("file:")) {
   }
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+// Создаем Prisma Client с обработкой ошибок
+let db: PrismaClient;
+
+try {
+  db =
+    globalForPrisma.prisma ??
+    new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
+
+  if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+} catch (error) {
+  console.error("❌ Failed to initialize Prisma Client:", error);
+  // Создаем fallback клиент для предотвращения падения приложения
+  db = new PrismaClient({
+    log: ["error"],
     datasources: {
       db: {
-        url: databaseUrl,
+        url: databaseUrl || "file:./dev.db",
       },
     },
   });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+export { db };
 
 // Примечание: База данных должна быть инициализирована во время build (vercel-build).
 // Если база данных не существует при первом запросе, ensureDatabaseInitialized()

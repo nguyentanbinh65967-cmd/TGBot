@@ -8,6 +8,11 @@ import { db } from "@/lib/db/prisma";
 import { headers } from "next/headers";
 import { validateInitData } from "@/lib/auth/server";
 
+/**
+ * Явно указываем Node.js runtime для использования node:crypto в validateInitData
+ */
+export const runtime = "nodejs";
+
 async function getUserId(request: Request): Promise<string | null> {
   // Сначала проверяем заголовок (для защищенных роутов через middleware)
   const headersList = await headers();

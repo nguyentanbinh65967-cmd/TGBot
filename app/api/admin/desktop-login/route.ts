@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 
 /**
  * API для десктоп-логина администратора
@@ -7,6 +8,11 @@ import type { NextRequest } from "next/server";
  * Проверяет логин и пароль, устанавливает куку для сессии.
  * Работает в production на Vercel.
  */
+
+/**
+ * Явно указываем Node.js runtime
+ */
+export const runtime = "nodejs";
 
 const ADMIN_USERNAME = "Admin";
 const ADMIN_PASSWORD = "Thekvando900";
@@ -39,7 +45,8 @@ export async function POST(request: NextRequest) {
     const useSecure = isProduction || isVercel;
     
     // Устанавливаем куку с правильными настройками для Vercel
-    response.cookies.set("desktop_admin", "1", {
+    // Используем cookies() из next/headers для серверной установки
+    cookies().set("desktop_admin", "1", {
       httpOnly: false, // Нужно для чтения на клиенте
       secure: useSecure, // HTTPS на Vercel и в production
       sameSite: "lax", // Lax для безопасности

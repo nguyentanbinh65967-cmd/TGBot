@@ -8,6 +8,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db/prisma";
 import { headers } from "next/headers";
 
+/**
+ * Явно указываем Node.js runtime для работы с Prisma
+ */
+export const runtime = "nodejs";
+
 export async function GET(request: Request) {
   try {
     const headersList = await headers();
