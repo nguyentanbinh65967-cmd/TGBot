@@ -10,22 +10,41 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isReady && user) {
+    if (isReady && user && webApp) {
       fetchAccessStatus();
-    } else {
+    } else if (isReady) {
+      // Если пользователь не авторизован, показываем форму
+      setAccessStatus("pending");
       setLoading(false);
     }
-  }, [isReady, user]);
+  }, [isReady, user, webApp]);
 
   const fetchAccessStatus = async () => {
     try {
-      const response = await fetch("/api/user/status");
+      // Получаем initData из Telegram WebApp
+      let initData: string | null = null;
+      if (webApp?.initData) {
+        initData = webApp.initData;
+      }
+
+      // Отправляем запрос с initData
+      const url = new URL("/api/user/status", window.location.origin);
+      if (initData) {
+        url.searchParams.set("initData", initData);
+      }
+
+      const response = await fetch(url.toString());
       const data = await response.json();
       if (data.success) {
         setAccessStatus(data.user?.accessStatus || "pending");
+      } else {
+        // Если ошибка авторизации, устанавливаем pending
+        setAccessStatus("pending");
       }
     } catch (err) {
       console.error("Error fetching access status:", err);
+      // При ошибке устанавливаем pending, чтобы показать форму
+      setAccessStatus("pending");
     } finally {
       setLoading(false);
     }

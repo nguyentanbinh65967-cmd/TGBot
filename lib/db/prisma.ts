@@ -26,13 +26,20 @@ let databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   // Автоматически устанавливаем SQLite fallback
   const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-  const sqlitePath = isVercel ? "/tmp/dev.db" : "./dev.db";
+  let sqlitePath: string;
+  if (isVercel) {
+    sqlitePath = "/tmp/dev.db";
+  } else {
+    // Используем абсолютный путь для локальной разработки
+    const projectRoot = process.cwd();
+    sqlitePath = path.join(projectRoot, "dev.db");
+  }
   databaseUrl = `file:${sqlitePath}`;
   process.env.DATABASE_URL = databaseUrl;
   console.log(`⚠️ DATABASE_URL not set, using SQLite fallback: ${databaseUrl}`);
 }
 
-// Для SQLite: убеждаемся, что директория существует
+// Для SQLite: убеждаемся, что директория существует и файл доступен
 if (databaseUrl.startsWith("file:")) {
   const dbPath = databaseUrl.replace("file:", "");
   const dbDir = path.dirname(dbPath);
@@ -45,6 +52,14 @@ if (databaseUrl.startsWith("file:")) {
     } catch (error) {
       console.warn(`⚠️  Could not create database directory ${dbDir}:`, error);
     }
+  }
+  
+  // Проверяем доступность файла базы данных
+  if (fs.existsSync(dbPath)) {
+    const stats = fs.statSync(dbPath);
+    console.log(`✅ Database file found: ${dbPath} (${stats.size} bytes)`);
+  } else {
+    console.warn(`⚠️  Database file not found: ${dbPath}. It will be created on first query.`);
   }
 }
 

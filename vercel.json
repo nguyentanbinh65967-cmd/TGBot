@@ -5,5 +5,13 @@
   "regions": ["iad1"],
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "false"
+  },
+  "functions": {
+    "app/**/*.ts": {
+      "runtime": "nodejs20.x"
+    },
+    "app/**/*.tsx": {
+      "runtime": "nodejs20.x"
+    }
   }
 }

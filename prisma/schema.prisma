@@ -221,7 +221,6 @@ model Course {
   // Relations
   direction   Direction @relation(fields: [directionId], references: [id], onDelete: Cascade)
   lessons     Lesson[]
-  userProgress UserProgress[]
   startCourseUsers User[] @relation("UserStartCourse")
   
   @@map("courses")

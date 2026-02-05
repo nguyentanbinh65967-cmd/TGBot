@@ -13,7 +13,7 @@ interface AccessRequest {
 }
 
 export function AccessRequestForm() {
-  const { user, isReady } = useTelegram();
+  const { user, isReady, webApp } = useTelegram();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,14 +21,29 @@ export function AccessRequestForm() {
   const [currentRequest, setCurrentRequest] = useState<AccessRequest | null>(null);
 
   useEffect(() => {
-    if (isReady && user) {
+    if (isReady && user && webApp) {
       fetchCurrentRequest();
     }
-  }, [isReady, user]);
+  }, [isReady, user, webApp]);
 
   const fetchCurrentRequest = async () => {
     try {
-      const response = await fetch("/api/access-request");
+      // Получаем initData из Telegram WebApp
+      let initData: string | null = null;
+      if (webApp?.initData) {
+        initData = webApp.initData;
+      }
+
+      if (!initData) {
+        return;
+      }
+
+      // Отправляем запрос с initData в заголовке
+      const response = await fetch("/api/access-request", {
+        headers: {
+          "Authorization": `Bearer ${initData}`,
+        },
+      });
       const data = await response.json();
       if (data.success && data.request) {
         setCurrentRequest(data.request);
@@ -45,9 +60,20 @@ export function AccessRequestForm() {
     setSuccess(false);
 
     try {
+      // Получаем initData из Telegram WebApp
+      const initData = webApp?.initData;
+      if (!initData) {
+        setError("Необходимо открыть приложение через Telegram");
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch("/api/access-request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${initData}`,
+        },
         body: JSON.stringify({ message }),
       });
 
