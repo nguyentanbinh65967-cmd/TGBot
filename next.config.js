@@ -32,11 +32,13 @@ const nextConfig = {
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https://telegram.org https://*.telegram.org https://api.telegram.org",
-      "frame-src 'self' https://telegram.org",
+      // Разрешаем встраивание Telegram WebApp в web.telegram.org
+      "frame-src 'self' https://telegram.org https://*.telegram.org",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'self'",
+      // Разрешаем, чтобы наш сайт мог быть во фрейме Telegram Web (web.telegram.org)
+      "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
       "upgrade-insecure-requests",
     ].join("; ");
     
