@@ -22,6 +22,12 @@ interface PageProps {
 
 export default async function AdminLogsPage({ searchParams }: PageProps) {
   try {
+    // Инициализируем базу данных, если она не существует
+    const { ensureDatabaseInitialized } = await import("@/lib/db/init-db");
+    await ensureDatabaseInitialized().catch((err) => {
+      console.warn("Database initialization warning:", err);
+    });
+
     // Парсим параметры
     const page = parseInt(searchParams.page || "1", 10);
     const action = searchParams.action;

@@ -216,6 +216,7 @@ export default function AdminLayout({
 
   const navItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
+    { href: "/admin/access-requests", label: "Запросы доступа", icon: "🔐" },
     { href: "/admin/users", label: "Пользователи", icon: "👥" },
     { href: "/admin/content", label: "Контент", icon: "📚" },
     { href: "/admin/settings", label: "Настройки", icon: "⚙️" },

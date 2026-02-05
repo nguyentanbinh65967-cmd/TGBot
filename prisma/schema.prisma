@@ -37,6 +37,13 @@ enum Role {
   superadmin
 }
 
+/// Статус одобрения пользователя
+enum AccessStatus {
+  pending    // Ожидает одобрения
+  approved   // Одобрен
+  rejected   // Отклонен
+}
+
 // ============================================
 // MODELS
 // ============================================
@@ -78,14 +85,30 @@ model User {
   /// Дата последнего входа
   lastLoginAt DateTime? @map("last_login_at")
   
+  /// Статус доступа пользователя
+  accessStatus AccessStatus @default(pending) @map("access_status")
+  
+  /// ID начального курса (с какого курса пользователь начинает обучение)
+  startCourseId Int? @map("start_course_id")
+  
+  /// Дата одобрения доступа
+  approvedAt DateTime? @map("approved_at")
+  
+  /// ID администратора, который одобрил доступ
+  approvedBy String? @map("approved_by")
+  
   // Relations
   logs        Log[]
   progress    UserProgress[]
+  accessRequests AccessRequest[]
+  startCourse Course? @relation("UserStartCourse", fields: [startCourseId], references: [id], onDelete: SetNull)
   
   @@map("users")
   @@index([role], name: "idx_users_role")
   @@index([isBlocked], name: "idx_users_is_blocked")
   @@index([lastLoginAt], name: "idx_users_last_login_at")
+  @@index([accessStatus], name: "idx_users_access_status")
+  @@index([startCourseId], name: "idx_users_start_course_id")
 }
 
 /// Логи действий пользователей и администраторов (Audit Trail)
@@ -198,6 +221,8 @@ model Course {
   // Relations
   direction   Direction @relation(fields: [directionId], references: [id], onDelete: Cascade)
   lessons     Lesson[]
+  userProgress UserProgress[]
+  startCourseUsers User[] @relation("UserStartCourse")
   
   @@map("courses")
   @@index([directionId], name: "idx_courses_direction_id")
@@ -276,4 +301,42 @@ model UserProgress {
   @@index([userId], name: "idx_user_progress_user_id")
   @@index([lessonId], name: "idx_user_progress_lesson_id")
   @@index([isCompleted], name: "idx_user_progress_is_completed")
+}
+
+/// Запросы на доступ от пользователей
+model AccessRequest {
+  /// ID запроса (автоинкремент)
+  id          Int      @id @default(autoincrement())
+  
+  /// ID пользователя, который запросил доступ
+  userId      String   @map("user_id")
+  
+  /// Статус запроса
+  status      AccessStatus @default(pending)
+  
+  /// Сообщение от пользователя (опционально)
+  message     String?
+  
+  /// ID администратора, который обработал запрос
+  processedBy String?  @map("processed_by")
+  
+  /// Дата обработки запроса
+  processedAt DateTime? @map("processed_at")
+  
+  /// Комментарий администратора при обработке
+  adminComment String? @map("admin_comment")
+  
+  /// Дата создания запроса
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  /// Дата обновления
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("access_requests")
+  @@index([userId], name: "idx_access_requests_user_id")
+  @@index([status], name: "idx_access_requests_status")
+  @@index([createdAt], name: "idx_access_requests_created_at")
 }

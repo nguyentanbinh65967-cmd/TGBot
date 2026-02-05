@@ -85,11 +85,48 @@ try {
   } else {
     // Для SQLite используем db push (не требует shadow database)
     // Это безопаснее и проще для SQLite
-    execSync("npx prisma db push", { 
-      stdio: "inherit",
-      env: { ...process.env, DATABASE_URL: finalDatabaseUrl }
-    });
-    console.log("✅ Database schema applied successfully\n");
+    
+    // Убеждаемся, что директория существует (для Vercel /tmp)
+    if (isVercel) {
+      const tmpDir = "/tmp";
+      if (!fs.existsSync(tmpDir)) {
+        console.warn(`⚠️  /tmp directory does not exist, this is unexpected on Vercel`);
+      } else {
+        console.log(`✅ /tmp directory exists`);
+      }
+    }
+    
+    // Проверяем, существует ли файл базы данных
+    const dbPath = finalDatabaseUrl.replace("file:", "");
+    const dbDir = path.dirname(dbPath);
+    if (dbDir !== "." && !fs.existsSync(dbDir)) {
+      console.log(`📁 Creating database directory: ${dbDir}`);
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    
+    try {
+      execSync("npx prisma db push", { 
+        stdio: "inherit",
+        env: { ...process.env, DATABASE_URL: finalDatabaseUrl }
+      });
+      
+      // Проверяем, что файл создан
+      if (fs.existsSync(dbPath)) {
+        const stats = fs.statSync(dbPath);
+        console.log(`✅ Database file created: ${dbPath} (${stats.size} bytes)`);
+      } else {
+        console.error(`❌ Database file not found after db push: ${dbPath}`);
+        console.error(`   This will cause runtime errors. Check file permissions and disk space.`);
+        process.exit(1);
+      }
+      
+      console.log("✅ Database schema applied successfully\n");
+    } catch (dbPushError) {
+      console.error("❌ Failed to push database schema:", dbPushError);
+      console.error(`   Database path: ${dbPath}`);
+      console.error(`   Database URL: ${finalDatabaseUrl}`);
+      throw dbPushError;
+    }
   }
 } catch (error) {
   console.warn("⚠️  Schema application failed, trying alternative method...");

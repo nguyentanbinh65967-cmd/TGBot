@@ -1,9 +1,35 @@
 "use client";
 
 import { useTelegram } from "@/hooks/useTelegram";
+import { AccessRequestForm } from "@/app/components/AccessRequestForm";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const { user, isReady, isTelegram, webApp } = useTelegram();
+  const [accessStatus, setAccessStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isReady && user) {
+      fetchAccessStatus();
+    } else {
+      setLoading(false);
+    }
+  }, [isReady, user]);
+
+  const fetchAccessStatus = async () => {
+    try {
+      const response = await fetch("/api/user/status");
+      const data = await response.json();
+      if (data.success) {
+        setAccessStatus(data.user?.accessStatus || "pending");
+      }
+    } catch (err) {
+      console.error("Error fetching access status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white">
@@ -68,6 +94,15 @@ export default function Home() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Форма запроса доступа - показываем, если пользователь не одобрен */}
+      {isReady && user && !loading && accessStatus !== "approved" && (
+        <section className="w-full px-4 py-8 md:px-8 md:py-16">
+          <div className="max-w-7xl mx-auto">
+            <AccessRequestForm />
+          </div>
+        </section>
       )}
 
       {/* 2. Основной экран */}

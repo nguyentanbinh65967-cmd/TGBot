@@ -20,6 +20,12 @@ interface PageProps {
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   try {
+    // Инициализируем базу данных, если она не существует
+    const { ensureDatabaseInitialized } = await import("@/lib/db/init-db");
+    await ensureDatabaseInitialized().catch((err) => {
+      console.warn("Database initialization warning:", err);
+    });
+
     // Получаем текущего пользователя из headers
     const headersList = await headers();
     const currentUserId = headersList.get("x-user-id");
@@ -206,6 +212,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     );
   } catch (error: any) {
     console.error("Error loading users page:", error);
+    const errorMessage = error?.message || "Не удалось загрузить список пользователей";
+    const isDatabaseError = errorMessage.includes("Unable to open the database file") || 
+                           errorMessage.includes("database file") ||
+                           errorMessage.includes("DATABASE_URL");
+    
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
@@ -213,8 +224,21 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             Ошибка загрузки пользователей
           </h2>
           <p className="text-red-700 dark:text-red-300 mb-4">
-            {error?.message || "Не удалось загрузить список пользователей. Проверьте настройки базы данных."}
+            {errorMessage}
           </p>
+          {isDatabaseError && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                <strong>Проблема с базой данных:</strong>
+              </p>
+              <ul className="list-disc list-inside text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                <li>База данных не была создана во время build</li>
+                <li>Проверьте логи Vercel build для ошибок в <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">vercel-build</code></li>
+                <li>Убедитесь, что <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">DATABASE_URL</code> установлен в Vercel Environment Variables</li>
+                <li>Для production рекомендуется использовать PostgreSQL вместо SQLite</li>
+              </ul>
+            </div>
+          )}
           {process.env.NODE_ENV === "development" && error?.stack && (
             <div className="bg-white dark:bg-gray-800 rounded p-4 mt-4">
               <p className="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
